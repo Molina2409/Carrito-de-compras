@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Carrito de Compras</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Base de datos de productos
+            const baseDeDatos = [
+                { id: 1, nombre: 'Iphone 15', precio: 4500000.00, imagen: 'https://http2.mlstatic.com/D_NQ_NP_912227-MLA71782903150_092023-O.webp' },
+                { id: 2, nombre: 'Xbox Series X', precio: 3000000.00, imagen: 'https://assets.xboxservices.com/assets/fb/d2/fbd2cb56-5c25-414d-9f46-e6a164cdf5be.png?n=XBX_A-BuyBoxBGImage01-D.png' },
+                { id: 3, nombre: 'PlayStation 5', precio: 3500000.00, imagen: 'https://gmedia.playstation.com/is/image/SIEPDC/ps5-product-thumbnail-01-en-14sep21?$facebook$' },
+                { id: 4, nombre: 'Macbook Pro', precio: 6000000.00, imagen: 'https://www.apple.com/newsroom/images/product/mac/standard/Apple_MacBook-Pro_14-16-inch_10182021.jpg.og.jpg?202405170054' }
+            ];
+
+            let carrito = [];
+            const divisa = '$';
+            const DOMitems = document.querySelector('#items');
+            const DOMcarrito = document.querySelector('#carrito');
+            const DOMtotal = document.querySelector('#total');
+            const DOMbotonVaciar = document.querySelector('#boton-vaciar');
+
+            // Función para renderizar los productos
+            function renderizarProductos() {
+                baseDeDatos.forEach((info) => {
+                    // Estructura del producto
+                    const miNodo = document.createElement('div');
+                    miNodo.classList.add('card', 'col-sm-4');
+                    
+                    // Cuerpo de la tarjeta
+                    const miNodoCardBody = document.createElement('div');
+                    miNodoCardBody.classList.add('card-body');
+                    
+                    // Título
+                    const miNodoTitle = document.createElement('h5');
+                    miNodoTitle.classList.add('card-title');
+                    miNodoTitle.textContent = info.nombre;
+                    
+                    // Imagen
+                    const miNodoImagen = document.createElement('img');
+                    miNodoImagen.classList.add('img-fluid');
+                    miNodoImagen.setAttribute('src', info.imagen);
+                    
+                    // Precio
+                    const miNodoPrecio = document.createElement('p');
+                    miNodoPrecio.classList.add('card-text');
+                    miNodoPrecio.textContent = `${info.precio}${divisa}`;
+                    
+                    // Botón para agregar al carrito
+                    const miNodoBoton = document.createElement('button');
+                    miNodoBoton.classList.add('btn', 'btn-primary');
+                    miNodoBoton.textContent = '+';
+                    miNodoBoton.setAttribute('marcador', info.id);
+                    miNodoBoton.addEventListener('click', anyadirProductoAlCarrito);
+                    
+                    // Insertamos los elementos en el cuerpo de la tarjeta
+                    miNodoCardBody.appendChild(miNodoImagen);
+                    miNodoCardBody.appendChild(miNodoTitle);
+                    miNodoCardBody.appendChild(miNodoPrecio);
+                    miNodoCardBody.appendChild(miNodoBoton);
+                    miNodo.appendChild(miNodoCardBody);
+                    DOMitems.appendChild(miNodo);
+                });
+            }
+
+            // Función para añadir un producto al carrito
+            function anyadirProductoAlCarrito(evento) {
+                carrito.push(evento.target.getAttribute('marcador'));
+                renderizarCarrito();
+            }
+
+            // Función para renderizar el carrito
+            function renderizarCarrito() {
+                // Vaciamos el contenido del carrito
+                DOMcarrito.textContent = '';
+                
+                // Quitamos los duplicados
+                const carritoSinDuplicados = [...new Set(carrito)];
+                
+                // Generamos los nodos para cada producto en el carrito
+                carritoSinDuplicados.forEach((item) => {
+                    const miItem = baseDeDatos.filter((itemBaseDatos) => {
+                        return itemBaseDatos.id === parseInt(item);
+                    });
+                    
+                    // Contamos el número de unidades de cada producto
+                    const numeroUnidadesItem = carrito.reduce((total, itemId) => {
+                        return itemId === item ? total + 1 : total;
+                    }, 0);
+                    
+                    // Creamos el nodo del item en el carrito
+                    const miNodo = document.createElement('li');
+                    miNodo.classList.add('list-group-item', 'text-right', 'mx-2');
+                    miNodo.textContent = `${numeroUnidadesItem} x ${miItem[0].nombre} - ${miItem[0].precio}${divisa}`;
+                    
+                    // Botón de borrar
+                    const miBoton = document.createElement('button');
+                    miBoton.classList.add('btn', 'btn-danger', 'mx-5');
+                    miBoton.textContent = 'X';
+                    miBoton.dataset.item = item;
+                    miBoton.addEventListener('click', borrarItemCarrito);
+                    
+                    // Mezclamos los nodos
+                    miNodo.appendChild(miBoton);
+                    DOMcarrito.appendChild(miNodo);
+                });
+                
+                // Renderizamos el precio total en el HTML
+                DOMtotal.textContent = calcularTotal();
+            }
+
+            // Función para borrar un elemento del carrito
+            function borrarItemCarrito(evento) {
+                const id = evento.target.dataset.item;
+                carrito = carrito.filter((carritoId) => {
+                    return carritoId !== id;
+                });
+                renderizarCarrito();
+            }
+
+            // Función para calcular el precio total
+            function calcularTotal() {
+                return carrito.reduce((total, item) => {
+                    const miItem = baseDeDatos.filter((itemBaseDatos) => {
+                        return itemBaseDatos.id === parseInt(item);
+                    });
+                    return total + miItem[0].precio;
+                }, 0).toFixed(2);
+            }
+
+            // Función para vaciar el carrito
+            function vaciarCarrito() {
+                carrito = [];
+                renderizarCarrito();
+            }
+
+            // Eventos
+            DOMbotonVaciar.addEventListener('click', vaciarCarrito);
+
+            // Inicialización
+            renderizarProductos();
+            renderizarCarrito();
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <!-- Elementos generados a partir del JSON -->
+            <main id="items" class="col-sm-8 row"></main>
+            <!-- Carrito -->
+            <aside class="col-sm-4">
+                <h2>Carrito</h2>
+                <!-- Elementos del carrito -->
+                <ul id="carrito" class="list-group"></ul>
+                <hr>
+                <!-- Precio total -->
+                <p class="text-right">Total: <span id="total"></span>&dollar;</p>
+                <button id="boton-vaciar" class="btn btn-danger">Vaciar</button>
+            </aside>
+        </div>
+    </div>
+</body>
+</html>
